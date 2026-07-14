@@ -11,9 +11,23 @@ then sends a notification via Telegram or LINE bot.
 """
 
 import argparse
+import json
 import os
 import sys
 from datetime import datetime
+
+import gspread
+from google.oauth2.service_account import Credentials
+
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+
+SHEET_ID = "1lyjY4CXHfEfttYyXGPC7A3853uaynw_IIDAeVDXSkFo"
+CREDS = Credentials.from_service_account_info(
+    json.loads(os.environ["GOOGLE_SHEETS_CREDENTIALS"]),
+    scopes=["https://www.googleapis.com/auth/spreadsheets"],
+)
+SHEET = gspread.authorize(CREDS).open_by_key(SHEET_ID).sheet1
 
 
 def append_to_sheet(menu: str, qty: int, price: float) -> dict:
@@ -22,6 +36,19 @@ def append_to_sheet(menu: str, qty: int, price: float) -> dict:
     Returns dict {timestamp, menu, qty, price, total} ที่ append แล้ว
     Raises RuntimeError ถ้า credentials ไม่มี หรือ Sheet ไม่ accessible
     """
+
+    timestamp = datetime.now().isoformat()
+    total = qty * price
+    row = [timestamp, menu, qty, price, total]
+    SHEET.append_row(row)
+    return {
+        "timestamp": timestamp,
+        "menu": menu,
+        "qty": qty,
+        "price": price,
+        "total": total,
+    }
+
     raise NotImplementedError("Implement in Session 2 Lab 1.3 (TODO 1)")
 
 
@@ -32,6 +59,16 @@ def send_notification(message: str) -> str:
     Returns: provider name ที่ใช้ ("telegram" หรือ "line")
     Raises RuntimeError ถ้า no credentials
     """
+    try:
+        r = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            data={"chat_id": CHAT_ID, "text": message},
+        )
+        r.raise_for_status()
+        return "telegram"
+    except Exception as exc:
+        print(f"[WARN] ส่ง Telegram ล้มเหลว: {exc}", file=sys.stderr)
+
     raise NotImplementedError("Implement in Session 2 Lab 1.3 (TODO 2)")
 
 
@@ -48,7 +85,10 @@ def main() -> int:
         total = row["total"]
     except Exception as exc:
         print(f"[ERROR] บันทึก Sheet ล้มเหลว: {exc}", file=sys.stderr)
-        print("[HINT] ตรวจ GOOGLE_SHEETS_CREDENTIALS และ share Sheet กับ service account email", file=sys.stderr)
+        print(
+            "[HINT] ตรวจ GOOGLE_SHEETS_CREDENTIALS และ share Sheet กับ service account email",
+            file=sys.stderr,
+        )
         return 1
 
     try:
