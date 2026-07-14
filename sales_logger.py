@@ -17,6 +17,7 @@ import sys
 from datetime import datetime
 
 import gspread
+import requests
 from google.oauth2.service_account import Credentials
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -27,7 +28,6 @@ CREDS = Credentials.from_service_account_info(
     json.loads(os.environ["GOOGLE_SHEETS_CREDENTIALS"]),
     scopes=["https://www.googleapis.com/auth/spreadsheets"],
 )
-SHEET = gspread.authorize(CREDS).open_by_key(SHEET_ID).sheet1
 
 
 def append_to_sheet(menu: str, qty: int, price: float) -> dict:
@@ -36,6 +36,7 @@ def append_to_sheet(menu: str, qty: int, price: float) -> dict:
     Returns dict {timestamp, menu, qty, price, total} ที่ append แล้ว
     Raises RuntimeError ถ้า credentials ไม่มี หรือ Sheet ไม่ accessible
     """
+    SHEET = gspread.authorize(CREDS).open_by_key(SHEET_ID).sheet1
 
     timestamp = datetime.now().isoformat()
     total = qty * price
@@ -49,7 +50,7 @@ def append_to_sheet(menu: str, qty: int, price: float) -> dict:
         "total": total,
     }
 
-    raise NotImplementedError("Implement in Session 2 Lab 1.3 (TODO 1)")
+    # raise NotImplementedError("Implement in Session 2 Lab 1.3 (TODO 1)")
 
 
 def send_notification(message: str) -> str:
@@ -59,11 +60,15 @@ def send_notification(message: str) -> str:
     Returns: provider name ที่ใช้ ("telegram" หรือ "line")
     Raises RuntimeError ถ้า no credentials
     """
+    if not TELEGRAM_BOT_TOKEN or not CHAT_ID:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN หรือ TELEGRAM_CHAT_ID ไม่ถูกตั้งค่า")
+
     try:
         r = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
             data={"chat_id": CHAT_ID, "text": message},
         )
+
         r.raise_for_status()
         return "telegram"
     except Exception as exc:
