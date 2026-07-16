@@ -86,6 +86,17 @@ def send_notification(message: str) -> str:
     raise NotImplementedError("Implement in Session 2 Lab 1.3 (TODO 2)")
 
 
+def get_sheet():
+    raw = os.environ.get("GOOGLE_SHEETS_CREDENTIALS")
+    if not raw:
+        raise RuntimeError("GOOGLE_SHEETS_CREDENTIALS ไม่ถูกตั้งค่า")
+    creds = Credentials.from_service_account_info(
+        json.loads(raw),
+        scopes=["https://www.googleapis.com/auth/spreadsheets"],
+    )
+    return gspread.authorize(creds).open_by_key(SHEET_ID).sheet1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MilkLab Sales Logger")
     parser.add_argument("--menu", required=True, help="ชื่อเมนู")
