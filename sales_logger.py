@@ -18,7 +18,10 @@ from datetime import datetime
 
 import gspread
 import requests
+from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
+
+load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
@@ -34,8 +37,7 @@ def append_to_sheet(menu: str, qty: int, price: float) -> dict:
     Raises RuntimeError ถ้า credentials ไม่มี หรือ Sheet ไม่ accessible
     """
     if not GOOGLE_SHEETS_CREDENTIALS:
-        print(
-            "[ERROR] GOOGLE_SHEETS_CREDENTIALS ไม่ถูกตั้งค่า", file=sys.stderr)
+        print("[ERROR] GOOGLE_SHEETS_CREDENTIALS ไม่ถูกตั้งค่า", file=sys.stderr)
         raise RuntimeError("GOOGLE_SHEETS_CREDENTIALS ไม่ถูกตั้งค่า")
 
     CREDS = Credentials.from_service_account_info(
@@ -68,9 +70,9 @@ def send_notification(message: str) -> str:
     """
     if not TELEGRAM_BOT_TOKEN or not CHAT_ID:
         print(
-            "[WARN] TELEGRAM_BOT_TOKEN หรือ TELEGRAM_CHAT_ID ไม่ถูกตั้งค่า", file=sys.stderr)
-        raise RuntimeError(
-            "TELEGRAM_BOT_TOKEN หรือ TELEGRAM_CHAT_ID ไม่ถูกตั้งค่า")
+            "[WARN] TELEGRAM_BOT_TOKEN หรือ TELEGRAM_CHAT_ID ไม่ถูกตั้งค่า", file=sys.stderr
+        )
+        raise RuntimeError("TELEGRAM_BOT_TOKEN หรือ TELEGRAM_CHAT_ID ไม่ถูกตั้งค่า")
 
     try:
         r = requests.post(
@@ -101,8 +103,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="MilkLab Sales Logger")
     parser.add_argument("--menu", required=True, help="ชื่อเมนู")
     parser.add_argument("--qty", type=int, required=True, help="จำนวนขวด")
-    parser.add_argument("--price", type=float,
-                        required=True, help="ราคาต่อขวด")
+    parser.add_argument("--price", type=float, required=True, help="ราคาต่อขวด")
     args = parser.parse_args()
 
     try:
@@ -119,11 +120,9 @@ def main() -> int:
 
     try:
         # TODO 4: เรียก send_notification ด้วย message ที่บอกยอดที่บันทึก
-        provider = send_notification(
-            f"บันทึก {args.menu} x{args.qty} = {total} บาท")
+        provider = send_notification(f"บันทึก {args.menu} x{args.qty} = {total} บาท")
     except Exception as exc:
-        print(
-            f"[WARN] บันทึก Sheet สำเร็จแต่ส่งแจ้งเตือนล้มเหลว: {exc}", file=sys.stderr)
+        print(f"[WARN] บันทึก Sheet สำเร็จแต่ส่งแจ้งเตือนล้มเหลว: {exc}", file=sys.stderr)
         return 0
 
     print(f"[OK] บันทึกและแจ้งเตือนผ่าน {provider} เรียบร้อย ยอด {total} บาท")
