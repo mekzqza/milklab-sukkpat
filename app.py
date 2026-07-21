@@ -8,30 +8,60 @@ Deploy: push to GitHub then Actions deploys to HuggingFace Space
 
 import os
 
+import faiss
 import streamlit as st
+from dotenv import load_dotenv
+from google import genai
+from sentence_transformers import SentenceTransformer
+
+load_dotenv()
 
 
 @st.cache_resource
 def load_index():
-    """TODO 1+2+3: โหลด menu_kb.md, split เป็น chunk, encode ด้วย sentence-transformers,
-    สร้าง faiss index. Cache เพราะโหลด model ครั้งแรกใช้เวลา 30 วินาที
+    # TODO 1: โหลด + หั่น chunk
+    with open("menu_kb.md", encoding="utf-8") as f:
+        text = f.read()
+    chunks = [c.strip() for c in text.split("\n## ") if c.strip()]
 
-    Returns: (model, index, chunks_list)
-    """
-    raise NotImplementedError("Implement in Session 3 Lab 2.2 (TODO 1-3)")
+    # TODO 2: encode chunk เป็นเวกเตอร์
+    model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+    embeddings = model.encode(chunks, convert_to_numpy=True)
+
+    # TODO 3: สร้าง faiss index
+    dim = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dim)
+    index.add(embeddings)
+
+    return model, index, chunks
 
 
-def retrieve_top_k(query: str, model, index, chunks: list[str], k: int = 3) -> list[str]:
-    """TODO 4: encode query, search index, return top-k chunks"""
-    raise NotImplementedError("Implement in Session 3 Lab 2.2 (TODO 4)")
+def retrieve_top_k(query, model, index, chunks, k=3):
+    query_vec = model.encode(
+        [query], convert_to_numpy=True
+    )  # ← model ตัวเดียวกับตอน encode chunk!
+    distances, indices = index.search(query_vec, k)
+    return [chunks[i] for i in indices[0]]
 
 
-def generate_answer(query: str, context_chunks: list[str]) -> str:
-    """TODO 5: ส่ง query + context ไป Gemini, return answer
+def generate_answer(query, context_chunks):
+    context = "\n\n".join(context_chunks)
+    prompt = f"""ตอบจากข้อมูลต่อไปนี้เท่านั้น ถ้าไม่มีใน context ให้บอกว่าไม่ทราบ ห้ามเดา
 
-    Hint: build prompt that says "ตอบจากข้อมูลต่อไปนี้เท่านั้น ถ้าไม่มีใน context ให้บอกว่าไม่รู้"
-    """
-    raise NotImplementedError("Implement in Session 3 Lab 2.2 (TODO 5)")
+ข้อมูล:
+{context}
+
+คำถาม: {query}"""
+
+    api_key = os.environ.get("GOOGLE_API_KEY")
+    if not api_key:
+        raise RuntimeError("GOOGLE_API_KEY ไม่ถูกตั้งค่า")
+    client = genai.Client(api_key=api_key)
+    resp = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+    )
+    return resp.text
 
 
 def main():
