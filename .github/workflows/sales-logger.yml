@@ -1,26 +1,29 @@
-name: Daily Sales Logger
+name: Log Repair Job
 
+# pivot (S4): ร้านนมมี cron ปิดร้านทุกคืนแล้วสรุปยอด แต่ร้านซ่อมรับงานไม่เป็นเวลา
+# เลยเหลือแค่ manual dispatch ไว้บันทึกงานจากมือถือตอนอยู่หน้าร้าน
 on:
-  schedule:
-    # 13:00 UTC = 20:00 ICT (Thailand)
-    - cron: '0 13 * * *'
   workflow_dispatch:
     inputs:
-      menu:
-        description: 'ชื่อเมนู'
+      model:
+        description: 'รุ่นเครื่อง'
         required: true
-        default: 'นมหมีฮอกไกโด'
-      qty:
-        description: 'จำนวน'
+        default: 'iPhone 12'
+      service:
+        description: 'รายการซ่อม'
         required: true
-        default: '1'
+        default: 'เปลี่ยนจอ เกรด A'
       price:
         description: 'ราคา'
         required: true
-        default: '65'
+        default: '1290'
+      warranty:
+        description: 'ประกัน (วัน)'
+        required: true
+        default: '15'
 
 jobs:
-  log-sale:
+  log-job:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +43,7 @@ jobs:
           LINE_CHANNEL_TOKEN: ${{ secrets.LINE_CHANNEL_TOKEN }}
         run: |
           python sales_logger.py \
-            --menu "${{ github.event.inputs.menu || 'นมหมีฮอกไกโด' }}" \
-            --qty ${{ github.event.inputs.qty || 1 }} \
-            --price ${{ github.event.inputs.price || 65 }}
+            --model "${{ github.event.inputs.model }}" \
+            --service "${{ github.event.inputs.service }}" \
+            --price ${{ github.event.inputs.price }} \
+            --warranty ${{ github.event.inputs.warranty }}
