@@ -1,3 +1,15 @@
+
+---
+title: MilkLab RAG
+emoji: 🥛
+colorFrom: blue
+colorTo: purple
+sdk: streamlit
+sdk_version: 1.35.0
+app_file: app.py
+pinned: false
+---
+
 # MilkLab° Solopreneur Starter (Course 69-1)
 
 Template repo สำหรับวิชา 31-407-106-406 : AI for Solopreneurs
