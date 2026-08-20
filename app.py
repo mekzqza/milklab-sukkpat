@@ -1,4 +1,4 @@
-"""MilkLab RAG Chatbot (S3).
+"""FrokFix RAG Chatbot (S3).
 
 Run locally: streamlit run app.py
 Deploy: push to GitHub then Actions deploys to HuggingFace Space
@@ -20,7 +20,7 @@ load_dotenv()
 @st.cache_resource
 def load_index():
     # TODO 1: โหลด + หั่น chunk
-    with open("menu_kb.md", encoding="utf-8") as f:
+    with open("frokfix_kb.md", encoding="utf-8") as f:
         text = f.read()
     chunks = [c.strip() for c in text.split("\n## ") if c.strip()]
 
@@ -65,9 +65,9 @@ def generate_answer(query, context_chunks):
 
 
 def main():
-    st.set_page_config(page_title="MilkLab° RAG", page_icon="🥛")
-    st.title("MilkLab° RAG Chatbot")
-    st.caption("ถามอะไรเกี่ยวกับ MilkLab ได้ ตอบจาก menu_kb.md")
+    st.set_page_config(page_title="FrokFix° RAG", page_icon="🔧")
+    st.title("FrokFix° เช็คราคาซ่อมมือถือ")
+    st.caption("ถามราคา อาการเสีย หรือเงื่อนไขประกัน ตอบจากตารางราคาจริงของร้าน")
 
     try:
         model, index, chunks = load_index()
@@ -82,7 +82,7 @@ def main():
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
-    if prompt := st.chat_input("ถามอะไรเกี่ยวกับ MilkLab"):
+    if prompt := st.chat_input("เช่น จอ iPhone 12 เท่าไหร่ ซ่อมกี่วัน"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
