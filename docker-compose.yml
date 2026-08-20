@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8501:8501"   # ponytail: bind localhost อย่างเดียว ให้ nginx เป็นทางเข้าเดียว

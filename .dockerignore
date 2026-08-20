@@ -1,0 +1,10 @@
+.git
+.env
+.env.bak
+# service account key ไม่ต้องเข้า image — โค้ดอ่านจาก env GOOGLE_SHEETS_CREDENTIALS
+logical-voyage-*.json
+__pycache__
+*.pyc
+.devcontainer
+deploy
+test_*.py
